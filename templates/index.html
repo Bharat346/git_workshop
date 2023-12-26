@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curve Drawer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+label {
+    margin-bottom: 10px;
+    color: #555;
+}
+
+input {
+    padding: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+input:hover{
+    border:3px solid rgb(195, 0, 255) ;
+}
+
+button {
+    background-color: #4caf50;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+.plot {
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #ea0808;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+p {
+    text-align: center;
+    cursor: pointer;
+    color: #4caf50;
+    margin-top: 10px;
+}
+
+p:hover {
+    text-decoration: underline;
+}
+</style>
+<body>
+    <div class="container">
+        <h1>Curve Drawer</h1>
+    
+        <form id="curveForm">
+            <label for="user_function">Enter a mathematical function:</label>
+            <input type="text" id="user_function" name="user_function" required>
+            <button type="button" onclick="drawCurve()">Draw Curve</button>
+        </form>
+    
+        <div id="plot" style="display: none;">
+            <h2>Curve :</h2>
+            <div id="cursorPosition">X: 0, Y: 0</div>
+            <img id="curveImage" src="" alt="Curve" onmousemove="updateCursorPosition(event)">
+            <p onclick="restart()">Restart</p>
+        </div>
+    
+        <p id="errorMessage" style="color: red;"></p>
+    
+        <script>
+            function updateCursorPosition() {
+                fetch('/get_cursor_position')
+                .then(response => response.json())
+                .then(data => {
+                    var cursorPositionDiv = document.getElementById('cursorPosition');
+                    cursorPositionDiv.innerText = 'X: ' + data.x.toFixed(2) + ', Y: ' + data.y.toFixed(2);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+            function drawCurve() {
+                var userFunction = document.getElementById('user_function').value;
+                var formData = new FormData();
+                formData.append('user_function', userFunction);
+    
+                fetch('/plot', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if ('error' in data) {
+                        document.getElementById('errorMessage').innerText = 'Error: ' + data.error;
+                    } else {
+                        document.getElementById('errorMessage').innerText = '';
+                        console.log(data)
+                        document.getElementById('plot').style.display = 'block';
+                        document.getElementById('curveImage').src = 'data:image/png;base64, ' + data.img_base64;
+                        // // Update cursor position dynamically
+                        // var cursorPositionDiv = document.getElementById('cursorPosition');
+                        // cursorPositionDiv.innerText = 'X: ' + data.cursor_x.toFixed(2) + ', Y: ' + data.cursor_y.toFixed(2);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+
+            
+            function restart() {
+                location.reload()
+            }
+        </script>
+</body>
+</html>
